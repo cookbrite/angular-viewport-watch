@@ -1,7 +1,7 @@
 "use strict";
 
 (function() {
-    function viewportWatch(scrollMonitor, $timeout, $parse) {
+    function viewportWatch(scrollMonitor, $timeout, $parse, $rootScope) {
         var viewportUpdateTimeout;
         function debouncedViewportUpdate() {
             $timeout.cancel(viewportUpdateTimeout);
@@ -10,16 +10,24 @@
             }, 10);
         }
 
+        function createDebouncingVersion(func, delay) {
+            var debounceTimeout;
+            return function () {
+                clearTimeout(debounceTimeout);
+                debounceTimeout = setTimeout(func, delay);
+            };
+        }
+
         var link = function(scope, element, attr) {
             if($parse(attr.viewportWatch)(scope) == false){
                 return false;
             }
 
             if (attr.hashkey !== element.attr('hashkey')) {
-                var unwatch = scope.$watch(function() {
+                var unwatchFunction = scope.$watch(function() {
                     return element.attr('hashkey');
                 }, function() {
-                    unwatch && unwatch();
+                    unwatchFunction && unwatchFunction();
                     link.call(this, scope, element, attr);
                 });
                 return true;
@@ -65,6 +73,13 @@
                 } while (next);
                 if (digest) {
                     scope.$digest();
+
+                    if (!$rootScope.debouncingApplyAsync) {
+                        $rootScope.debouncingApplyAsync = createDebouncingVersion(function () {
+                            $rootScope.$applyAsync();
+                        }, 10);
+                    }
+                    $rootScope.debouncingApplyAsync();
                 }
             }
             function disableDigest() {
@@ -97,6 +112,6 @@
             link: link
         };
     }
-    viewportWatch.$inject = [ "scrollMonitor", "$timeout", "$parse" ];
+    viewportWatch.$inject = [ "scrollMonitor", "$timeout", "$parse", "$rootScope" ];
     angular.module("angularViewportWatch", []).directive("viewportWatch", viewportWatch).value("scrollMonitor", window.scrollMonitor);
 })();
