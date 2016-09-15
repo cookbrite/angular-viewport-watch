@@ -29,14 +29,24 @@
                 return false;
             }
 
-            if (attr.hashkey !== element.attr('hashkey')) {
-                var unwatchFunction = scope.$watch(function() {
-                    return element.attr('hashkey');
-                }, function() {
-                    unwatchFunction && unwatchFunction();
-                    link.call(this, scope, element, attr);
-                });
-                return true;
+            var viewportWatchLinkFunctionExpr = (attr.viewportWatchLinkWhenTrue && attr.viewportWatchLinkWhenTrue.length > 1) ? attr.viewportWatchLinkWhenTrue : undefined;
+
+            if (viewportWatchLinkFunctionExpr) {
+                scope.watchedElement = element;
+
+                var viewportWatchLinkFunction = $parse(viewportWatchLinkFunctionExpr);
+                var check = function() {
+                    var result = viewportWatchLinkFunction(scope);
+                    return result;
+                };
+
+                if (!check()) {
+                    var unwatchFunction = scope.$watch(check, function () {
+                        unwatchFunction && unwatchFunction();
+                        link.call(this, scope, element, attr);
+                    });
+                    return true;
+                }
             }
 
             var container = (attr.viewportWatchContainer && attr.viewportWatchContainer.length > 1) ? attr.viewportWatchContainer : undefined;
