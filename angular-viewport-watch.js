@@ -18,6 +18,12 @@
             };
         }
 
+        if (!$rootScope.debouncingApplyAsync) {
+            $rootScope.debouncingApplyAsync = createDebouncingVersion(function () {
+                $rootScope.$applyAsync();
+            }, 10);
+        }
+
         var link = function(scope, element, attr) {
             if($parse(attr.viewportWatch)(scope) == false){
                 return false;
@@ -73,12 +79,6 @@
                 } while (next);
                 if (digest) {
                     scope.$digest();
-
-                    if (!$rootScope.debouncingApplyAsync) {
-                        $rootScope.debouncingApplyAsync = createDebouncingVersion(function () {
-                            $rootScope.$applyAsync();
-                        }, 10);
-                    }
                     $rootScope.debouncingApplyAsync();
                 }
             }
