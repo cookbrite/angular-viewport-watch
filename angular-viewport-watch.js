@@ -29,6 +29,11 @@
                 return false;
             }
 
+            // prevent link()-ing multiple times
+            if (("$$listeners" in scope) && ("toggleWatchers" in scope.$$listeners)) {
+                return false;
+            }
+
             var viewportWatchLinkFunctionExpr = (attr.viewportWatchLinkWhenTrue && attr.viewportWatchLinkWhenTrue.length > 1) ? attr.viewportWatchLinkWhenTrue : undefined;
 
             if (viewportWatchLinkFunctionExpr) {
